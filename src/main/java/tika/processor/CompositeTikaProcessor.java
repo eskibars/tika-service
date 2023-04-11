@@ -157,7 +157,7 @@ public class CompositeTikaProcessor extends AbstractTikaProcessor {
 
                 // check if there have been enough characters read / extracted and that we read enough bytes from the stream
                 // (images embedded in the documents will occupy quite more space than just raw text)
-                if (outStream.size() >= compositeTikaProcessorConfig.getPdfMinDocTextLength()) {
+                if (outStream.size() >= compositeTikaProcessorConfig.getPdfMinDocTextLength() && !Objects.equals(compositeTikaProcessorConfig.getPdfOcrStrategy(), "NO_OCR")) {
                     // since we are performing a second pass over the document, we need to reset cursor position
                     // in both input and output streams
 
@@ -457,6 +457,7 @@ public class CompositeTikaProcessor extends AbstractTikaProcessor {
 
         PDFParserConfig.OCR_RENDERING_STRATEGY ocrRenderStrategy = PDFParserConfig.OCR_RENDERING_STRATEGY.ALL;
         PDFParserConfig.IMAGE_STRATEGY ocrImageStrategy = PDFParserConfig.IMAGE_STRATEGY.RAW_IMAGES;
+        PDFParserConfig.OCR_STRATEGY ocrStrategy = PDFParserConfig.OCR_STRATEGY.AUTO;
 
         switch (compositeTikaProcessorConfig.getPdfOcrRenderingStrategy()) {
             case "ALL" -> ocrRenderStrategy = PDFParserConfig.OCR_RENDERING_STRATEGY.ALL;
@@ -472,8 +473,16 @@ public class CompositeTikaProcessor extends AbstractTikaProcessor {
             case "RENDER_PAGES_AT_PAGE_END" -> ocrImageStrategy = PDFParserConfig.IMAGE_STRATEGY.RENDER_PAGES_AT_PAGE_END;
         }
 
+        switch (compositeTikaProcessorConfig.getPdfOcrStrategy()) {
+            case "AUTO" : { ocrStrategy = PDFParserConfig.OCR_STRATEGY.AUTO; }
+            case "NO_OCR" : { ocrStrategy = PDFParserConfig.OCR_STRATEGY.NO_OCR; }
+            case "OCR_AND_TEXT_EXTRACTION": { ocrStrategy = PDFParserConfig.OCR_STRATEGY.OCR_AND_TEXT_EXTRACTION; pdfOcrConfig.setExtractUniqueInlineImagesOnly(true);}
+            case "OCR_ONLY" : { ocrStrategy = PDFParserConfig.OCR_STRATEGY.OCR_ONLY; pdfOcrConfig.setExtractInlineImages(false); }
+        }
+
         pdfOcrConfig.setOcrRenderingStrategy(ocrRenderStrategy);
         pdfOcrConfig.setImageStrategy(ocrImageStrategy);
+        pdfOcrConfig.setOcrStrategy(ocrStrategy);
 
         pdfOcrParser = new PDFParser();
         pdfOcrParseContext = new ParseContext();
